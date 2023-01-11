@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+	<meta name="description" content="OpenWX MQTT compact visualisation">
+	<meta name="author" content="Meinhard F. Guenther, DL2MF &copy; 2021">	
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+	<script src="./js/mqttws31.js" type="text/javascript"></script>  
+  </head>
+  <body>
+<div id="map" style="height: 1080px; width: 1920px; position: relative; top: 1px; left: 1px; padding: 0; overflow: hidden!important;"></div>
+		<script type="text/javascript">
+		var map = L.map('map').setView([52.6200, 10.2800 ], 7);
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+		document.addEventListener('DOMContentLoaded', function() {mqtt_init();}, false);
+		function mqtt_init() {
+			client = new Paho.MQTT.Client("82.165.59.144", 9001, "/", "mqtt.MQTTv31");
+			client.onConnectionLost = onConnectionLost;
+			client.onMessageArrived = onMessageArrived;
+			client.connect({onSuccess:onConnect});
+		function onConnect() {console.log("onConnect"); client.subscribe("owx_ttgo:data");}
+		function onConnectionLost(responseObject) {if (responseObject.errorCode !== 0) { console.log("onConnectionLost:"+responseObject.errorMessage);}}
+		function onMessageArrived(message) { msg = JSON.parse(message.payloadString);
+			var marker = L.marker([msg.lat, msg.lon]).addTo(map).bindPopup(msg.id + ' - ' + msg.freq.toFixed(2) + 'MHz' + '<hr>Lat: N' + msg.lat + ' Lon: E' + msg.lon + '<br>' + 'Alt: ' + msg.alt + 'm - Frame#: ' + msg.frame).openPopup();		
+			marker.setLatLng([msg.lat, msg.lon]);}}
+		</script>
+  </body>
+</html>
